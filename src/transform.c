@@ -40,7 +40,7 @@
 #include "snabb.h"
 #include "transform.h"
 
-#define DATASTORE_COMMAND_MAX 128
+#define COMMAND_MAX 256
 #define BUFSIZE 256
 
 /* transform xpath to snabb compatible format
@@ -573,14 +573,14 @@ error:
 }
 
 int sync_datastores(global_ctx_t *ctx) {
-  char datastore_command[DATASTORE_COMMAND_MAX] = {0};
+  char datastore_command[COMMAND_MAX] = {0};
   int rc = SR_ERR_OK;
   FILE *fp;
 
   /* check if the startup datastore is empty
    * by checking the output of sysrepocfg */
 
-  snprintf(datastore_command, DATASTORE_COMMAND_MAX, "sysrepocfg -X -d startup -m %s", ctx->yang_model);
+  snprintf(datastore_command, COMMAND_MAX, "sysrepocfg -X -d startup -m %s", ctx->yang_model);
 
   fp = popen(datastore_command, "r");
   CHECK_NULL_MSG(fp, &rc, cleanup, "popen failed");
@@ -709,6 +709,25 @@ cleanup:
   return rc;
 }
 
+int send_config_listen_command(global_ctx_t *ctx, const char *socket_path, int32_t pid) {
+  int rc = SR_ERR_OK;
+  char config_listen_command[COMMAND_MAX] = {0};
+  FILE *config_listen = NULL;
+
+  snprintf(config_listen_command, COMMAND_MAX, "snabb config listen -c %s %d", socket_path, pid);
+
+  config_listen = popen(config_listen_command, "r");
+  CHECK_NULL_MSG(config_listen, &rc, cleanup, "Error opening pipe");
+  
+cleanup:
+  // TODO: this definitely shouldn't be closed here, but through ctx, when the sysrepo plugin exit
+  if (config_listen) {
+    pclose(config_listen);
+  }
+
+  return rc;
+}
+
 int snabb_socket_connect(global_ctx_t *ctx) {
   struct sockaddr_un address;
   const char *socket_path = "/tmp/snabb-sysrepo-plugin.sock";
@@ -717,6 +736,9 @@ int snabb_socket_connect(global_ctx_t *ctx) {
 
   rc = get_config_leader_pid(&pid);
   CHECK_RET_MSG(rc, cleanup, "failed to get snabb config leader pid");
+
+  rc = send_config_listen_command(ctx, socket_path, pid);
+  CHECK_RET_MSG(rc, cleanup, "failed to send snabb config listen command");
 
   ctx->socket_fd = socket(PF_UNIX, SOCK_STREAM, 0);
   if (ctx->socket_fd < 0) {
