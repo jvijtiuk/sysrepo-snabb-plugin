@@ -711,6 +711,7 @@ cleanup:
 
 int snabb_socket_connect(global_ctx_t *ctx) {
   struct sockaddr_un address;
+  const char *socket_path = "/tmp/snabb-sysrepo-plugin.sock";
   int32_t pid = 0;
   int rc = SR_ERR_OK;
 
@@ -724,15 +725,15 @@ int snabb_socket_connect(global_ctx_t *ctx) {
     goto cleanup;
   }
 
-  snprintf(ctx->socket_path, UNIX_PATH_MAX,
-           "/run/snabb/%d/config-leader-socket", pid);
+  strncpy(ctx->socket_path, socket_path, UNIX_PATH_MAX);
+  ctx->socket_path[UNIX_PATH_MAX - 1] = 0;
 
   /* start with a clean address structure */
   memset(&address, 0, sizeof(struct sockaddr_un));
 
   address.sun_family = AF_UNIX;
-  snprintf(address.sun_path, UNIX_PATH_MAX,
-           "/run/snabb/%d/config-leader-socket", pid);
+  strncpy(address.sun_path, socket_path, UNIX_PATH_MAX);
+  address.sun_path[UNIX_PATH_MAX - 1] = 0;
 
   rc = connect(ctx->socket_fd, (struct sockaddr *)&address,
                sizeof(struct sockaddr_un));
@@ -743,6 +744,7 @@ cleanup:
     socket_close(ctx);
     rc = SR_ERR_INTERNAL;
   }
+
   return rc;
 }
 
