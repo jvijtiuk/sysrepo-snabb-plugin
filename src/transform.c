@@ -41,6 +41,7 @@
 #include "transform.h"
 
 #define DATASTORE_COMMAND_MAX 128
+#define BUFSIZE 256
 
 /* transform xpath to snabb compatible format
  * 1) remove yang model from xpath
@@ -678,19 +679,12 @@ cleanup:
   return rc;
 }
 
-int snabb_socket_connect(global_ctx_t *ctx) {
-  int32_t pid = 0, ignore_pid;
-  struct sockaddr_un address;
+static int get_config_leader_pid(int32_t *pid) {
+  int32_t ignore_pid = 0;
   int rc = SR_ERR_OK;
-  FILE *snabb_ps = NULL;
   char *ret = NULL;
-  int BUFSIZE = 256;
+  FILE *snabb_ps = NULL;
   char line[BUFSIZE];
-
-  // close existing socket if exists
-  if (-1 != ctx->socket_fd) {
-    close(ctx->socket_fd);
-  }
 
   // extract pid from the command "snabb ps"
   snabb_ps = popen("snabb ps", "r");
@@ -701,12 +695,27 @@ int snabb_socket_connect(global_ctx_t *ctx) {
   ret = fgets(line, sizeof(line), snabb_ps);
   CHECK_NULL_MSG(ret, &rc, cleanup, "Second line of snabb ps is empty");
 
-  if (sscanf(line, "  \\- %d   worker for %d", &ignore_pid, &pid) != 2) {
+  if (sscanf(line, "  \\- %d   worker for %d", &ignore_pid, pid) != 2) {
     ERR_MSG("Error running 'snabb ps' command.");
     rc = SR_ERR_INTERNAL;
     goto cleanup;
   }
-  INF("connect to snabb socket /run/snabb/%d/config-leader-socket", pid);
+
+cleanup:
+  if (snabb_ps) {
+    fclose(snabb_ps);
+  }
+
+  return rc;
+}
+
+int snabb_socket_connect(global_ctx_t *ctx) {
+  struct sockaddr_un address;
+  int32_t pid = 0;
+  int rc = SR_ERR_OK;
+
+  rc = get_config_leader_pid(&pid);
+  CHECK_RET_MSG(rc, cleanup, "failed to get snabb config leader pid");
 
   ctx->socket_fd = socket(PF_UNIX, SOCK_STREAM, 0);
   if (ctx->socket_fd < 0) {
@@ -730,9 +739,6 @@ int snabb_socket_connect(global_ctx_t *ctx) {
   CHECK_RET_MSG(rc, cleanup, "failed connection to snabb socket");
 
 cleanup:
-  if (snabb_ps) {
-    pclose(snabb_ps);
-  }
   if (rc != SR_ERR_OK) {
     socket_close(ctx);
     rc = SR_ERR_INTERNAL;
