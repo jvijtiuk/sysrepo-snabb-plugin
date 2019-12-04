@@ -600,7 +600,7 @@ int sync_datastores(global_ctx_t *ctx) {
 
 cleanup:
   if (fp) {
-    fclose(fp);
+    pclose(fp);
   }
 
   return rc;
@@ -703,7 +703,7 @@ static int get_config_leader_pid(int32_t *pid) {
 
 cleanup:
   if (snabb_ps) {
-    fclose(snabb_ps);
+    pclose(snabb_ps);
   }
 
   return rc;
