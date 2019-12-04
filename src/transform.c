@@ -709,7 +709,7 @@ cleanup:
   return rc;
 }
 
-int send_config_listen_command(global_ctx_t *ctx, const char *socket_path, int32_t pid) {
+static int send_config_listen_command(global_ctx_t *ctx, const char *socket_path, int32_t pid) {
   int rc = SR_ERR_OK;
   char config_listen_command[COMMAND_MAX] = {0};
   FILE *config_listen = NULL;
