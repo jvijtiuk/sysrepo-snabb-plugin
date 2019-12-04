@@ -254,20 +254,11 @@ int socket_send(global_ctx_t *ctx, char *input, bool ignore_error) {
   pthread_rwlock_wrlock(&ctx->snabb_lock);
   nbytes = write(ctx->socket_fd, buffer, nbytes);
   if ((int)strlen(buffer) != (int)nbytes) {
-    if (-1 == nbytes) {
-      rc = snabb_socket_reconnect(ctx);
-      pthread_rwlock_unlock(&ctx->snabb_lock);
-      CHECK_RET(rc, error, "failed snabb_socket_reconnect: %s",
-                sr_strerror(rc));
-      free(buffer);
-      return socket_send(ctx, input, ignore_error);
-    } else {
-      pthread_rwlock_unlock(&ctx->snabb_lock);
-      ERR("Failed to write full input to server: written %d, expected %d",
-          (int)nbytes, (int)strlen(buffer));
-      rc = SR_ERR_INTERNAL;
-      goto error;
-    }
+    pthread_rwlock_unlock(&ctx->snabb_lock);
+    ERR("Failed to write full input to server: written %d, expected %d",
+         (int)nbytes, (int)strlen(buffer));
+    rc = SR_ERR_INTERNAL;
+    goto error;
   }
   nbytes = read(ctx->socket_fd, read_output, 256);
   pthread_rwlock_unlock(&ctx->snabb_lock);
@@ -687,7 +678,7 @@ cleanup:
   return rc;
 }
 
-int snabb_socket_reconnect(global_ctx_t *ctx) {
+int snabb_socket_connect(global_ctx_t *ctx) {
   int32_t pid = 0, ignore_pid;
   struct sockaddr_un address;
   int rc = SR_ERR_OK;

@@ -40,7 +40,7 @@ int sync_datastores(global_ctx_t *);
 
 void clear_context(global_ctx_t *ctx);
 
-int snabb_socket_reconnect(global_ctx_t *);
+int snabb_socket_connect(global_ctx_t *);
 
 int snabb_state_data_to_sysrepo(global_ctx_t *, char *, sr_val_t **, size_t *);
 bool is_new_snabb_command(iter_change_t *, iter_change_t *);
