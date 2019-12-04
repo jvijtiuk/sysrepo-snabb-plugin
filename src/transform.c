@@ -714,7 +714,7 @@ int send_config_listen_command(global_ctx_t *ctx, const char *socket_path, int32
   char config_listen_command[COMMAND_MAX] = {0};
   FILE *config_listen = NULL;
 
-  snprintf(config_listen_command, COMMAND_MAX, "snabb config listen -c %s %d", socket_path, pid);
+  snprintf(config_listen_command, COMMAND_MAX, "snabb config listen -c %s -s %s %d", socket_path, ctx->yang_model, pid);
 
   config_listen = popen(config_listen_command, "r");
   CHECK_NULL_MSG(config_listen, &rc, cleanup, "Error opening pipe");
