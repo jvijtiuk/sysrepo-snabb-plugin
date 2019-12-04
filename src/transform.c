@@ -808,18 +808,18 @@ int sr_modified_operation(global_ctx_t *ctx, sr_val_t *val) {
   char *message = NULL;
   char *snabb_xpath = NULL;
   char *leaf = NULL;
+  const char *set_msg_fmt = "{\"verb\": \"set\", \"path\": \"%s\", \"value\": \"%s\"}";
 
   leaf = sr_val_to_str(val);
   CHECK_NULL_MSG(leaf, &rc, cleanup, "failed to allocate memory");
   snabb_xpath = sr_xpath_to_snabb(val->xpath);
   CHECK_NULL_MSG(snabb_xpath, &rc, cleanup, "failed to allocate memory");
 
-  int len = 47 + strlen(snabb_xpath) + strlen(ctx->yang_model) + strlen(leaf);
+  int len = strlen(snabb_xpath) + strlen(leaf) + strlen(set_msg_fmt) + 1;
   message = malloc(sizeof(*message) * len);
   CHECK_NULL_MSG(message, &rc, cleanup, "failed to allocate memory");
 
-  snprintf(message, len, "set-config {path '%s'; config '%s'; schema %s;}",
-           snabb_xpath, leaf, ctx->yang_model);
+  snprintf(message, len, set_msg_fmt, snabb_xpath, leaf);
 
   /* send to socket */
   rc = socket_send(ctx, message, false);
@@ -843,16 +843,16 @@ int sr_deleted_operation(global_ctx_t *ctx, sr_val_t *val) {
   int rc = SR_ERR_OK;
   char *snabb_xpath = NULL;
   char *message = NULL;
+  const char *remove_msg_fmt = "{\"verb\": \"remove\", \"path\": \"%s\"}";
 
   snabb_xpath = sr_xpath_to_snabb(val->xpath);
   CHECK_NULL_MSG(snabb_xpath, &rc, cleanup, "failed to allocate memory");
 
-  int len = 38 + strlen(snabb_xpath) + strlen(ctx->yang_model);
+  int len = strlen(snabb_xpath) + strlen(remove_msg_fmt);
   message = malloc(sizeof(*message) * len);
   CHECK_NULL_MSG(message, &rc, cleanup, "failed to allocate memory");
 
-  snprintf(message, len, "remove-config {path '%s'; schema %s;}", snabb_xpath,
-           ctx->yang_model);
+  snprintf(message, len, remove_msg_fmt, snabb_xpath);
 
   /* send to socket */
   rc = socket_send(ctx, message, false);
@@ -943,6 +943,7 @@ int sr_created_operation(global_ctx_t *ctx, iter_change_t **p_iter,
   int rc = SR_ERR_OK;
   struct lyd_node *root = NULL;
   char *xpath = NULL;
+  const char *add_msg_fmt = "{\"verb\": \"add\", \"path\": \"%s\", \"value\": \"%s\"}"; 
 
   pthread_rwlock_rdlock(&ctx->iter_lock);
   sr_val_t *create_val = iter[begin].new_val;
@@ -978,11 +979,10 @@ int sr_created_operation(global_ctx_t *ctx, iter_change_t **p_iter,
   snabb_xpath = sr_xpath_to_snabb_no_end_keys(xpath);
   CHECK_NULL_MSG(snabb_xpath, &rc, cleanup, "failed to allocate memory");
 
-  int len = 47 + strlen(snabb_xpath) + strlen(data) + strlen(ctx->yang_model);
+  int len = strlen(snabb_xpath) + strlen(data) + strlen(add_msg_fmt);
   message = malloc(sizeof(*message) * len);
   CHECK_NULL_MSG(message, &rc, cleanup, "failed to allocate memory");
-  snprintf(message, len, "add-config {path '%s'; config '%s'; schema %s;}",
-           snabb_xpath, data, ctx->yang_model);
+  snprintf(message, len, add_msg_fmt, snabb_xpath, data);
 
   /* send to socket */
   rc = socket_send(ctx, message, false);
