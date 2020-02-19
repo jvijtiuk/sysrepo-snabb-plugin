@@ -1,4 +1,5 @@
 FROM ubuntu:18.04
+ARG yangmodel=snabb-softwire-v2
 
 MAINTAINER luka.paulic@sartura.hr
 
@@ -103,7 +104,7 @@ RUN \
       git clone https://github.com/sysrepo/sysrepo-snabb-plugin.git && \
       cd sysrepo-snabb-plugin && mkdir build && cd build && \
       git checkout sysrepo-1.x.x && \
-      cmake -DCMAKE_BUILD_TYPE:String="debug" -DPLUGIN:BOOL=ON -DYANG_MODEL:String="snabb-softwire-v2" -DSR_PLUGINS_DIR="/usr/local/lib/sysrepo/plugins" .. && \
+      cmake -DCMAKE_BUILD_TYPE:String="debug" -DPLUGIN:BOOL=ON -DYANG_MODEL:String=${yangmodel} -DSR_PLUGINS_DIR="/usr/local/lib/sysrepo/plugins" .. && \
       make -j2 && \
       make install && \
       ldconfig
@@ -118,8 +119,11 @@ RUN \
       ldconfig
 
 # install snabb YANG models
-RUN \
-      sysrepoctl -i /opt/dev/snabb/src/lib/yang/snabb-softwire-v2.yang
+RUN if ["${yangmodel}" = "ietf-softwire-br"]; then sysrepoctl -i /opt/dev/snabb/src/lib/yang/ietf-softwire-common.yang && \
+	sysrepoctl -i /opt/dev/snabb/src/lib/yang/ietf-softwire-br.yang && \
+	sysrepoctl -c ietf-softwire-br -e binding-mode; \
+	else sysrepoctl -i /opt/dev/snabb/src/lib/yang/snabb-softwire-v2; \
+	fi
 
 # setup systemd
 ENV \
