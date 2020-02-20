@@ -531,7 +531,7 @@ int libyang_data_to_sysrepo(sr_session_ctx_t *session, struct lyd_node *root) {
   }
 
   INF_MSG("apply the changes");
-  rc = sr_apply_changes(session, 0);
+  rc = sr_apply_changes(session, 0, 0);
   CHECK_RET(rc, error, "failed sr_apply_changes: %s", sr_strerror(rc));
 
   xpath = NULL;
