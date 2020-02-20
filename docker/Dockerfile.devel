@@ -119,10 +119,10 @@ RUN \
       ldconfig
 
 # install snabb YANG models
-RUN if ["${yangmodel}" = "ietf-softwire-br"]; then sysrepoctl -i /opt/dev/snabb/src/lib/yang/ietf-softwire-common.yang && \
+RUN if [ "$yangmodel" = "ietf-softwire-br" ]; then sysrepoctl -i /opt/dev/snabb/src/lib/yang/ietf-softwire-common.yang && \
 	sysrepoctl -i /opt/dev/snabb/src/lib/yang/ietf-softwire-br.yang && \
 	sysrepoctl -c ietf-softwire-br -e binding-mode; \
-	else sysrepoctl -i /opt/dev/snabb/src/lib/yang/snabb-softwire-v2; \
+	else sysrepoctl -i /opt/dev/snabb/src/lib/yang/snabb-softwire-v2.yang; \
 	fi
 
 # setup systemd
