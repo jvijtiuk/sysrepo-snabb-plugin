@@ -750,18 +750,6 @@ cleanup:
 }
 
 bool is_new_snabb_command(iter_change_t *iter, iter_change_t *prev) {
-  /* edge case, can't add/remove on XPATH /softwire-config/instance only edit */
-  char *cmp_xpath = "/snabb-softwire-v2:softwire-config/instance";
-  sr_val_t *tmp_val =
-      (SR_OP_DELETED == iter->oper) ? iter->old_val : iter->new_val;
-  if (0 == strncmp(cmp_xpath, tmp_val->xpath, strlen(cmp_xpath))) {
-    if (tmp_val->type >= SR_BINARY_T && iter->oper != SR_OP_DELETED) {
-      iter->oper = SR_OP_MODIFIED;
-      return true;
-    }
-    return false;
-  }
-
   /* one snabb command for creating list or containers */
   // print_change(iter->oper, iter->old_val, iter->new_val);
   if (SR_OP_CREATED == iter->oper && iter->new_val->type == SR_LIST_T) {
