@@ -275,10 +275,10 @@ int sr_plugin_init_cb(sr_session_ctx_t *session, void **private_ctx) {
   CHECK_RET(rc, error, "failed to apply sysrepo startup data to snabb: %s",
             sr_strerror(rc));
 
-  rc = sr_copy_config(ctx->startup_sess, ctx->yang_model, SR_DS_STARTUP,
+  rc = sr_copy_config(ctx->sess, ctx->yang_model, SR_DS_STARTUP,
                       SR_DS_RUNNING, 0);
   if (SR_ERR_OK != rc) {
-    WRN_MSG("Failed to copy running datastore to startup");
+    WRN_MSG("Failed to copy startup datastore to running");
     /* TODO handle this error */
     goto error;
   }
