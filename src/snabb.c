@@ -296,7 +296,7 @@ int sr_plugin_init_cb(sr_session_ctx_t *session, void **private_ctx) {
                                    &ctx->sub);
   CHECK_RET(rc, error, "failed sr_dp_get_items_subscribe: %s", sr_strerror(rc));
 
-  snprintf(xpath, XPATH_MAX_LEN, "/%s:br-instance/algorithm/algo-instance/traffic-stat", ctx->yang_model);
+  snprintf(xpath, XPATH_MAX_LEN, "/%s:br-instances/algorithm/algo-instance/traffic-stat", ctx->yang_model);
   rc = sr_oper_get_items_subscribe(ctx->sess, ctx->yang_model, xpath,
                                    state_data_cb, ctx, SR_SUBSCR_CTX_REUSE,
                                    &ctx->sub);
